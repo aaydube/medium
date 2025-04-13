@@ -1,29 +1,73 @@
 import { Hono } from "hono";
+import { verify } from "hono/jwt";
 import { getPrisma } from "..";
 import { createPostInput, updatePostInput } from "@aaydube/common"
 
 export const blogRouter = new Hono<{
     Bindings:{
-        DATABASE_URL:string
+        DATABASE_URL:string,
+        JWT_SECRET: string
     }
     Variables:{
         userId: string
     }
 }>()
 
+blogRouter.use("/*", async (c, next) => {
+    const token = c.req.header("Authorization");
+    if (!token) {
+      c.status(401);
+      return c.json({ error: "unauthorized" });
+    }
+    try {
+      const payload = await verify(token, c.env.JWT_SECRET);
+      if (!payload) {
+        c.status(401);
+        return c.json({ error: "unauthorized" });
+      }
+  
+      c.set("userId", payload.id as string);
+      await next();
+    } catch (error) {
+      c.status(403);
+      return c.json({ error: "error while " });
+    }
+  });
+
 blogRouter.get("/all", async(c)=>{
     const prisma = getPrisma(c.env.DATABASE_URL)
-    const blogs = await prisma.post.findMany({})
+    const blogs = await prisma.post.findMany({
+        select: {
+            content: true,
+            title: true,
+            id: true,
+            author: {
+                select: {
+                    name: true
+                }
+            }
+        }
+    })
     return c.json(blogs)
 })
 
 
-blogRouter.get("/", async(c)=>{
+blogRouter.get("/:id", async(c)=>{
     const prisma = getPrisma(c.env.DATABASE_URL)
-    const id = c.req.query("id")
+    const id = c.req.param("id")
     const blog = await prisma.post.findUnique({
         where: {
             id: id,
+        },
+        select: {
+            id: true,
+            title: true,
+            content: true,
+            author: {
+                select: {
+                    name: true
+                }
+            }
         }
     })
     return c.json(blog)
