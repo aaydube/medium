@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react";
+import React, { ChangeEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { SignupType } from "@aaydube/common";
 import axios from "axios";
@@ -23,8 +23,8 @@ export const Auth = ({ type }: { type: "signup" | "signin" }) => {
       localStorage.setItem("token", jwt);
       localStorage.setItem("name", response.data.name);
       navigate("/blogs");
-    } catch (e) {
-      alert(e);
+    } catch (error) {
+      alert(error);
     }
   }
 
@@ -33,7 +33,7 @@ export const Auth = ({ type }: { type: "signup" | "signin" }) => {
       <div className="absolute top-7 left-8">
         <img src="/img1.svg" alt="Logo" className="h-5" />
       </div>
-      <div className="w-full max-w-md space-y-6 bg-white p-6">
+      <div className="w-full max-w-md space-y-2 md:space-y-6 bg-white p-6">
         <div>
           <h2 className="text-center text-2xl font-semibold text-gray-900">
             {type === "signin"
